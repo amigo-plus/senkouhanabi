@@ -22,7 +22,8 @@ public class GameOverSequence : MonoBehaviour
     public float handleRiseDuration = 1.5f;  // 持ち手が上に上がる
     public float delayBeforeResult = 2f;  // 結果表示までの間
     public float fadeToBlackDuration = 3f; // 黒くなるまでの時間
-   public void StartSequence(float finalScore)
+    
+    public void StartSequence(float finalScore)
     {
         // --- 1. スコア・時間を消す（即時処理） ---
         if (gameoverText != null) gameoverText.gameObject.SetActive(false);
@@ -71,7 +72,7 @@ public class GameOverSequence : MonoBehaviour
                 gameoverText.gameObject.SetActive(true);
                 gameoverText.text = "スコア:" + Mathf.FloorToInt(finalScore);
                 
-                // (おまけ) テキスト表示時に「ポンッ」とポップアップさせる演出
+                // テキスト表示時のポップアップ演出
                 gameoverText.transform.localScale = Vector3.zero;
                 gameoverText.transform.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack);
             }

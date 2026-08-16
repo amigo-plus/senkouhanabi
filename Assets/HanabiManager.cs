@@ -329,8 +329,8 @@ public class HanabiManager : MonoBehaviour
         bool isGameOver = currentState == GameState.GameOver;
 
         if (titlePanel != null) titlePanel.gameObject.SetActive(isTitle);
-        if (ignitionGaugeUI != null) ignitionGaugeUI.SetActive(isIgnition);
-        if (ShiftGaugeUI != null) ShiftGaugeUI.SetActive(isKeeping);
+        if (ignitionGaugeUI != null) ignitionGaugeUI.gameObject.SetActive(isIgnition);
+        if (ShiftGaugeUI != null) ShiftGaugeUI.gameObject.SetActive(isKeeping);
         if (fireballrenderer != null) fireballrenderer.gameObject.SetActive(isKeeping || isGameOver);
         if (scoreText != null) scoreText.gameObject.SetActive(isKeeping);
         if (timeText != null) timeText.gameObject.SetActive(isKeeping);
@@ -532,7 +532,7 @@ public class HanabiManager : MonoBehaviour
         }
         else
         {
-            remainingTime -= Time.deltaTime * 2f; // 角度が悪いと時間が早く減る
+            remainingTime -= Time.deltaTime * 4f; // 角度が悪いと時間が早く減る
         }
         
         // --- スコア加算 ---
