@@ -2,8 +2,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Microsoft.Unity.VisualStudio.Editor;
-using Unity.VisualScripting;
-using UnityEngine.Assertions.Must; // TextMeshProを使うために必要
+using UnityEngine.Assertions.Must;
+using NUnit.Framework; // TextMeshProを使うために必要
+using DG.Tweening;
 public class HanabiManager : MonoBehaviour
 {
     public enum GameState
@@ -51,6 +52,8 @@ public class HanabiManager : MonoBehaviour
     public Transform handleTransform; // 線香花火の持ち手部分
     public GameObject titlePanel; // タイトル背景
     public GameObject endpanel; // gameover背景
+    public GameObject KeepingBG;
+    public GameObject lighter;
     public TextMeshProUGUI scoreText; // スコア表示用のTextMeshProUGUIへの参照
     public TextMeshProUGUI timeText; // 残り時間表示用のTextMeshProUGUIへの参照
     public TextMeshProUGUI gameoverText; // gameoverの参照
@@ -84,7 +87,7 @@ public class HanabiManager : MonoBehaviour
    [Header("演出")]
    public GameOverSequence gameOverSequence;
    private Vector3 coreOriginalScale;
-   // public IgnitionSequence ignitionSequence; ここに点火時の演出を入れる
+   public IgnitionSequence ignitionSequence; 
 
     float GetWobble() // 揺れの設定
     {
@@ -329,7 +332,7 @@ public class HanabiManager : MonoBehaviour
         bool isGameOver = currentState == GameState.GameOver;
 
         if (titlePanel != null) titlePanel.gameObject.SetActive(isTitle);
-        if (ignitionGaugeUI != null) ignitionGaugeUI.gameObject.SetActive(isIgnition);
+        if (KeepingBG != null) KeepingBG.gameObject.SetActive(isIgnition || isKeeping || isGameOver);
         if (ShiftGaugeUI != null) ShiftGaugeUI.gameObject.SetActive(isKeeping);
         if (fireballrenderer != null) fireballrenderer.gameObject.SetActive(isKeeping || isGameOver);
         if (scoreText != null) scoreText.gameObject.SetActive(isKeeping);
@@ -342,6 +345,7 @@ public class HanabiManager : MonoBehaviour
             if (warningLeftPanel != null) warningLeftPanel.SetActive(false);
             if (warningRightPanel != null) warningRightPanel.SetActive(false);
         }
+        if (ignitionGaugeUI != null) ignitionGaugeUI.gameObject.SetActive(false);
     }
 
     void Update()
@@ -371,6 +375,7 @@ public class HanabiManager : MonoBehaviour
     {
         currentState = GameState.Ignition;
         UpdateUIVisibility();
+        ignitionSequence.StartSequence();
     }
     public void OnHowToPlayButtonClicked()
     {
@@ -435,6 +440,12 @@ public class HanabiManager : MonoBehaviour
             Debug.Log("Bad");
             toleranceRange = 10f;
             remainingTime -= 10f;
+        }
+        if (lighter != null) // ライター隠す
+        {
+            Sequence seq = DOTween.Sequence();
+            seq.Append(lighter.transform.DOMoveY(-10, 1).SetEase(Ease.OutCubic));
+
         }
         currentState = GameState.Keeping;
         UpdateUIVisibility();
@@ -562,6 +573,8 @@ public class HanabiManager : MonoBehaviour
         fireballCoreRenderer.transform.localScale = coreOriginalScale;
         currentState = GameState.Title;
         UpdateUIVisibility();
+        ignitionSequence.StartSequence();
+        UpdateUIVisibility();
     }
     public void OnRestartButtonClicked() // ボタンクリックでもう一度
     {
@@ -573,6 +586,8 @@ public class HanabiManager : MonoBehaviour
         toleranceRange = 20f;
         fireballCoreRenderer.transform.localScale = coreOriginalScale;
         currentState = GameState.Ignition;
+        UpdateUIVisibility();
+        ignitionSequence.StartSequence();
         UpdateUIVisibility();
     }
     
