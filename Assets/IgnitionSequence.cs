@@ -3,6 +3,7 @@ using System.Collections;
 using TMPro;
 using DG.Tweening;
 using System.Security.Cryptography.X509Certificates;
+using UnityEngine.Rendering;
 
 public class IgnitionSequence : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class IgnitionSequence : MonoBehaviour
    public GameObject lighter; // ライター
    public GameObject ignitionGaugeUI; // 着火ゲージのUI一式(親のGameObject)
    public RectTransform ignitionMarker; // 動く目印のRectTransform
+   public GameObject lighterfire;
 
    [Header("配置ポジション")]
    public Vector3 handleStartPos;
@@ -23,7 +25,27 @@ public class IgnitionSequence : MonoBehaviour
    public float handlemovetime = 1f; // 持ち手がinするまでかかる時間
    public float lightermovetime = 1f; // ↑のlighter版 
    public float delayBeforeGauge = 0.5f; // ゲージ登場までの時間
-
+   
+   void Start()
+    {
+        if (lighterfire != null) lighterfire.gameObject.SetActive(false);
+    }
+    public void PlayIgnitionSuccess(System.Action onComplete) // 完了時に呼ぶ関数を受け取る
+    {
+        if (lighterfire != null) lighterfire.gameObject.SetActive(true);
+        Sequence seq = DOTween.Sequence();
+        seq.AppendInterval(1f);
+        seq.OnComplete(() =>
+        {
+            if (lighterfire != null) lighterfire.gameObject.SetActive(false);
+            if (lighter != null) // ライター隠す
+            {
+            Sequence seq = DOTween.Sequence();
+            seq.Append(lighter.transform.DOMoveY(-10, 1).SetEase(Ease.OutCubic));
+            }
+            onComplete?.Invoke(); // 呼び出し元(HanabiManager)に終了伝える
+        });
+    }
     public void StartSequence()
     {
         // --- 1. 一度着火ゲージを消す ---
@@ -59,8 +81,6 @@ public class IgnitionSequence : MonoBehaviour
             if (ignitionGaugeUI != null) ignitionGaugeUI.gameObject.SetActive(true);
             if (ignitionGaugeUI != null) ignitionMarker.gameObject.SetActive(true); 
         });
-
-
 
     }
 }
