@@ -5,7 +5,6 @@ using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine.Assertions.Must;
 using NUnit.Framework; // TextMeshProを使うために必要
 using DG.Tweening;
-using Unity.VisualScripting;
 public class HanabiManager : MonoBehaviour
 {
     public enum GameState
@@ -59,6 +58,7 @@ public class HanabiManager : MonoBehaviour
     public TextMeshProUGUI scoreText; // スコア表示用のTextMeshProUGUIへの参照
     public TextMeshProUGUI timeText; // 残り時間表示用のTextMeshProUGUIへの参照
     public TextMeshProUGUI gameoverText; // gameoverの参照
+    public TextMeshProUGUI judgeText; // 着火ミニゲーム判定文字
    
    [Header("風向きイベント")]
    public bool isRightZoneActive = true; // 45°がokか
@@ -104,11 +104,11 @@ public class HanabiManager : MonoBehaviour
     {
         if (t < 40f)
         {
-            return 0.5f; // 50%
+            return 0.6f; // 60%
         }
         else
         {
-            return 0.8f; // ラストスパートは確率UP
+            return 0.9f; // ラストスパートは確率UP
         }
     }
 
@@ -371,6 +371,11 @@ public class HanabiManager : MonoBehaviour
             if (warningRightPanel != null) warningRightPanel.SetActive(false);
         }
         if (ignitionGaugeUI != null) ignitionGaugeUI.gameObject.SetActive(false);
+        if (currentState != GameState.IgnitionSuccess && judgeText != null)
+        {
+            judgeText.DOKill();
+            judgeText.gameObject.SetActive(false);
+        }
     }
 
     void Update()
@@ -451,6 +456,31 @@ public class HanabiManager : MonoBehaviour
             JudgeIgnition(ignitionGaugeValue);
         }
     }
+
+    private Vector3 judgeTextOriginalPos; // 初回の元位置を覚えておく変数
+    private bool isPosSaved = false;
+    void ShowJudgeText(string text)
+    {
+        if (judgeText == null) return;
+
+        if (!isPosSaved)  // 初回呼び出し時だけ、元のローカル位置を記憶しておく
+        {
+            judgeTextOriginalPos = judgeText.transform.localPosition;
+            isPosSaved = true;
+        }
+
+        judgeText.DOKill(); // 一旦すべてのアニメーションストップ
+        judgeText.text = text;
+        judgeText.gameObject.SetActive(true);
+
+        Sequence seq = DOTween.Sequence();
+        seq.Append(judgeText.transform.DOLocalMoveY(judgeTextOriginalPos.y+20f,0.3f).SetEase(Ease.OutExpo));
+        seq.Append(judgeText.transform.DOLocalMoveY(judgeTextOriginalPos.y+5f,0.3f).SetEase(Ease.InQuad));
+        seq.OnComplete(() =>
+        {
+            if (judgeText != null) judgeText.gameObject.SetActive(false);
+        });
+    }
         
     void JudgeIgnition(float value) // 点火タイミング評価
     {
@@ -460,6 +490,7 @@ public class HanabiManager : MonoBehaviour
             Debug.Log("Perfect!");
             toleranceRange = 30f;
             score += 1000f;
+            ShowJudgeText("Perfect!");
         } 
         else if (diff < 0.25f)
         {
@@ -467,12 +498,14 @@ public class HanabiManager : MonoBehaviour
             toleranceRange = 20f;
             remainingTime -= 5f;
             score += 500f;
+            ShowJudgeText("Good");
         }
         else
         {
             Debug.Log("Bad");
             toleranceRange = 10f;
             remainingTime -= 10f;
+            ShowJudgeText("Bad");
         }
 
         currentState = GameState.IgnitionSuccess;
@@ -490,7 +523,7 @@ public class HanabiManager : MonoBehaviour
         UpdateUIVisibility();
         if (audioManager != null)
         {
-            audioManager.PlayBGM(audioManager.bgmKeeping, fadeDuration:1.5f);
+            audioManager.PlayBGM(audioManager.bgmKeeping, fadeDuration:0.7f);
         }
     }
 
@@ -615,6 +648,12 @@ public class HanabiManager : MonoBehaviour
         toleranceRange = 20f;
         fireballCoreRenderer.transform.localScale = coreOriginalScale;
         currentHanabiPhase = 0;
+        isRightZoneActive = true;
+        isLeftZoneActive = true;
+        WindCheckTimer = 0f;
+        hasDecidedThisWindow = false;
+        pendingEventWillHappen = false;
+        pendingUseRightOnly = false;
         if (audioManager != null)
         {
             audioManager.StopBGM();
@@ -635,6 +674,12 @@ public class HanabiManager : MonoBehaviour
         toleranceRange = 20f;
         fireballCoreRenderer.transform.localScale = coreOriginalScale;
         currentHanabiPhase = 0;
+        isRightZoneActive = true;
+        isLeftZoneActive = true;
+        WindCheckTimer = 0f;
+        hasDecidedThisWindow = false;
+        pendingEventWillHappen = false;
+        pendingUseRightOnly = false;
         if (audioManager != null)
         {
             audioManager.StopSE();
