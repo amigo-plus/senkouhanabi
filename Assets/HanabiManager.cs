@@ -402,6 +402,11 @@ public class HanabiManager : MonoBehaviour
     {
         currentState = GameState.Ignition;
         UpdateUIVisibility();
+        if (audioManager != null)
+        {
+            audioManager.StopHanabiSE();
+            audioManager.PlayBGM(audioManager.bgmbeforeIgnition, fadeDuration: 1.0f); // 虫の音
+        }
         ignitionSequence.StartSequence();
     }
     public void OnHowToPlayButtonClicked()
@@ -442,6 +447,7 @@ public class HanabiManager : MonoBehaviour
         // --- クリック判定 ---
         if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) // 左クリックorスペースキーが押された瞬間
         {
+            if (audioManager != null) audioManager.PlaySE(audioManager.lighterSE);
             JudgeIgnition(ignitionGaugeValue);
         }
     }
@@ -482,6 +488,10 @@ public class HanabiManager : MonoBehaviour
     {
         currentState = GameState.Keeping;
         UpdateUIVisibility();
+        if (audioManager != null)
+        {
+            audioManager.PlayBGM(audioManager.bgmKeeping, fadeDuration:1.5f);
+        }
     }
 
     void UpdateShiftGauge()　// shiftgaugeの設定
@@ -614,7 +624,6 @@ public class HanabiManager : MonoBehaviour
         currentState = GameState.Title;
         UpdateUIVisibility();
         ignitionSequence.StartSequence();
-        UpdateUIVisibility();
     }
     public void OnRestartButtonClicked() // ボタンクリックでもう一度
     {
@@ -628,14 +637,13 @@ public class HanabiManager : MonoBehaviour
         currentHanabiPhase = 0;
         if (audioManager != null)
         {
-            audioManager.StopBGM();
             audioManager.StopSE();
             audioManager.StopHanabiSE();
+            audioManager.PlayBGM(audioManager.bgmbeforeIgnition, true, 1.0f);
         }
         currentState = GameState.Ignition;
         UpdateUIVisibility();
         ignitionSequence.StartSequence();
-        UpdateUIVisibility();
     }
     
 }

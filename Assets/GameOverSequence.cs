@@ -39,7 +39,7 @@ public class GameOverSequence : MonoBehaviour
         if (audioManager != null)
         {
             audioManager.StopSE();
-            audioManager.StopBGM();
+            audioManager.StopBGM(1.0f);
             audioManager.StopHanabiSE();
         }
 
