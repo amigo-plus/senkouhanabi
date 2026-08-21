@@ -5,6 +5,7 @@ using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine.Assertions.Must;
 using NUnit.Framework; // TextMeshProを使うために必要
 using DG.Tweening;
+using Unity.VisualScripting;
 public class HanabiManager : MonoBehaviour
 {
     public enum GameState
@@ -80,7 +81,6 @@ public class HanabiManager : MonoBehaviour
    public float warningLeadTime = 1f; // イベント発生の何秒前に警告するか
    public float blinkSpeed = 5f; // 点滅スピード
    public float windEventStartDelay = 10f; // 最初の10秒はイベントなし
-
    private bool hasDecidedThisWindow = false; // 今回分の抽選をもう決めたか
    private bool pendingEventWillHappen = false; // 次のイベントは発生するか
    private bool pendingUseRightOnly = false;    // 発生する場合、右のみOKになるか
@@ -90,6 +90,7 @@ public class HanabiManager : MonoBehaviour
    private Vector3 coreOriginalScale;
    public IgnitionSequence ignitionSequence; 
    public AudioManager audioManager;
+   private int currentHanabiPhase = 0; // 1:第一段階, 2:第二段階, 3:第三段階
 
     float GetWobble() // 揺れの設定
     {
@@ -161,6 +162,11 @@ public class HanabiManager : MonoBehaviour
             float chance = GetWindEventChance(t);
             pendingEventWillHappen = Random.value < chance;
             pendingUseRightOnly = Random.value > 0.5f;
+
+            if (pendingEventWillHappen && audioManager != null)
+            {
+                audioManager.PlaySE(audioManager.Warning); // 警告音
+            }
         }
         UpdateWarningDisplay(inWarningWindow);
     
@@ -174,6 +180,7 @@ public class HanabiManager : MonoBehaviour
                 isRightZoneActive = pendingUseRightOnly;
                 isLeftZoneActive = !pendingUseRightOnly;
                 Debug.Log(pendingUseRightOnly ? "風向き変更！右側のみOK" : "風向き変更！左側のみOK");
+                if (audioManager != null) audioManager.PlaySE(audioManager.WindSE); // 風の音
             }
             else
             {
@@ -218,15 +225,30 @@ public class HanabiManager : MonoBehaviour
         if (t < 15f)
         {
             currentColor = new Color(1f, 0.60f, 0.2f);
+            if (currentHanabiPhase != 1 && audioManager != null)
+            {
+                currentHanabiPhase = 1;
+                audioManager.PlayHanabiSE(audioManager.hanabiSE_1);
+            }
         }
         else if (t < 40f)
         {
             currentColor = new Color(1f, 0.45f, 0.1f);
+            if (currentHanabiPhase != 2 && audioManager != null) 
+            {
+                currentHanabiPhase = 2;
+                audioManager.PlayHanabiSE(audioManager.hanabiSE_2);
+            }
         }
         else
         {
             float hue = Mathf.Repeat(t * 0.8f, 1f); // 0~1をループする値
             currentColor = Color.HSVToRGB(hue, 1f, 1f);　// HSV(色相・彩度・明度)で設定、hueで色相変化させ虹色に
+            if (currentHanabiPhase != 3 && audioManager != null)
+            {
+                currentHanabiPhase = 3;
+                audioManager.PlayHanabiSE(audioManager.hanabiSE_3);
+            }
         }
         
         fireballrenderer.color = currentColor;
@@ -409,7 +431,7 @@ public class HanabiManager : MonoBehaviour
                 ignitionGoingUp = true; // 下限で反転
             }
         }
-        Debug.Log("ゲージ: " + ignitionGaugeValue);
+        // Debug.Log("ゲージ: " + ignitionGaugeValue);
 
         if (ignitionMarker != null)
         {
@@ -582,6 +604,13 @@ public class HanabiManager : MonoBehaviour
         ignitionGoingUp = true;
         toleranceRange = 20f;
         fireballCoreRenderer.transform.localScale = coreOriginalScale;
+        currentHanabiPhase = 0;
+        if (audioManager != null)
+        {
+            audioManager.StopBGM();
+            audioManager.StopSE();
+            audioManager.StopHanabiSE();
+        }
         currentState = GameState.Title;
         UpdateUIVisibility();
         ignitionSequence.StartSequence();
@@ -596,6 +625,13 @@ public class HanabiManager : MonoBehaviour
         ignitionGoingUp = true;
         toleranceRange = 20f;
         fireballCoreRenderer.transform.localScale = coreOriginalScale;
+        currentHanabiPhase = 0;
+        if (audioManager != null)
+        {
+            audioManager.StopBGM();
+            audioManager.StopSE();
+            audioManager.StopHanabiSE();
+        }
         currentState = GameState.Ignition;
         UpdateUIVisibility();
         ignitionSequence.StartSequence();

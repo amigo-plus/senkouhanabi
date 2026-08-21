@@ -16,6 +16,7 @@ public class GameOverSequence : MonoBehaviour
     public ParticleSystem fireballParticlesLv3;
     public TextMeshProUGUI gameoverText; // 最終的に表示するリザルトテキスト
     public GameObject buttonGroup; 
+    public AudioManager audioManager;
 
     
     [Header("演出タイミング")]
@@ -34,6 +35,13 @@ public class GameOverSequence : MonoBehaviour
         if (fireballParticles != null) fireballParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         if (fireballParticlesLv2 != null) fireballParticlesLv2.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         if (fireballParticlesLv3 != null) fireballParticlesLv3.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        if (audioManager != null)
+        {
+            audioManager.StopSE();
+            audioManager.StopBGM();
+            audioManager.StopHanabiSE();
+        }
 
         // --- DOTween シーケンスの構築 ---
         Sequence seq = DOTween.Sequence();
@@ -75,6 +83,7 @@ public class GameOverSequence : MonoBehaviour
                 // テキスト表示時のポップアップ演出
                 gameoverText.transform.localScale = Vector3.zero;
                 gameoverText.transform.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack);
+                if (audioManager != null) audioManager.PlaySE(audioManager.taikoSE); // 太鼓の音
             }
 
             if (buttonGroup != null)
